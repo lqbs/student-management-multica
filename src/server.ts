@@ -1,8 +1,10 @@
 import { resolveDatabasePath, resolveHost, resolvePort } from './config.js';
 import { createApp } from './app.js';
-import { closeSharedDatabase, createDatabase } from './db/index.js';
+import { closeSharedDatabase, getSharedDatabase } from './db/index.js';
 
-const db = createDatabase();
+// 使用共享连接：正常停服时由 closeSharedDatabase() 统一关闭，
+// 关闭会触发 SQLite 的 WAL checkpoint，只保留主库文件（避免备份时丢最新数据）。
+const db = getSharedDatabase();
 const app = createApp({ db });
 const host = resolveHost();
 const port = resolvePort();
@@ -16,12 +18,41 @@ const server = app.listen(port, host, () => {
   console.log('  按 Ctrl+C 停止服务');
 });
 
-function shutdown(signal: string): void {
-  console.log(`\n收到 ${signal}，正在关闭服务…`);
-  server.close(() => {
+let shuttingDown = false;
+let finished = false;
+
+function finish(code: number): void {
+  if (finished) {
+    return;
+  }
+  finished = true;
+  try {
     closeSharedDatabase();
-    process.exit(0);
-  });
+  } catch (error) {
+    console.error('关闭数据库连接失败：', error);
+  }
+  process.exit(code);
+}
+
+/**
+ * 优雅关闭：停止接收新请求 → 只断开空闲 keep-alive 连接（进行中的请求正常完成）
+ * → 关闭数据库连接（WAL checkpoint）→ 退出。5 秒兜底强制关闭剩余连接。
+ */
+function shutdown(signal: string): void {
+  if (shuttingDown) {
+    return;
+  }
+  shuttingDown = true;
+  console.log(`\n收到 ${signal}，正在关闭服务…`);
+
+  server.close(() => finish(0));
+  server.closeIdleConnections();
+
+  const timer = setTimeout(() => {
+    server.closeAllConnections();
+    finish(0);
+  }, 5000);
+  timer.unref();
 }
 
 process.on('SIGINT', () => shutdown('SIGINT'));

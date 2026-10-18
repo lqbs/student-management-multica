@@ -103,8 +103,9 @@ npm test
 
 ## 备份与恢复
 
-- **备份**：停止服务（Ctrl+C）后复制 `data/student-management.sqlite`（如存在 `-wal` / `-shm` 文件，一并复制或先停服让其合并）到安全位置。
-- **恢复**：停止服务，用备份文件替换 `data/student-management.sqlite`，再启动服务。数据库为本地演示数据文件，不承诺跨机器自动同步。
+- **备份**：正常停止服务（`Ctrl+C` 或 `kill -INT`，进程会先关闭数据库连接并合并 WAL）后，`data/` 目录只保留主库文件，直接复制 `data/student-management.sqlite` 即可，该文件已包含全部最新数据。
+  - 若进程是被强制结束的（`kill -9`、崩溃或断电）而未经正常停服，目录中可能残留 `-wal` / `-shm` 文件，此时请连同这两个文件一并复制（或先正常启动再正常停止一次，让 SQLite 自动合并 WAL）：只复制主库文件可能得到过期数据，甚至提示 `no such table: students`。
+- **恢复**：停止服务，用备份文件替换 `data/student-management.sqlite`（如备份中含 `-wal` / `-shm` 也一并放回），再启动服务。数据库为本地演示数据文件，不承诺跨机器自动同步。
 - **重置**：`npm run db:seed -- --force` 清空并重建合成数据；或停止服务后删除数据库文件再 `npm run db:migrate && npm run db:seed`。普通启动流程不会删除任何文件。
 
 ## 目录结构

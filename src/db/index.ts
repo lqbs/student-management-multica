@@ -36,7 +36,7 @@ export function createDatabase(file: string = resolveDatabasePath(), options: Cr
 
 let sharedDatabase: DatabaseSync | null = null;
 
-/** 服务进程内共享的数据库连接（启动时自动迁移）。 */
+/** 服务进程共享的数据库连接（启动时自动迁移）；server.ts 使用它以便停服时能真正关闭连接。 */
 export function getSharedDatabase(): DatabaseSync {
   if (!sharedDatabase) {
     sharedDatabase = createDatabase();
@@ -44,10 +44,12 @@ export function getSharedDatabase(): DatabaseSync {
   return sharedDatabase;
 }
 
+/** 关闭共享连接：SQLite 在最后一个连接关闭时执行 WAL checkpoint 并移除 -wal / -shm。 */
 export function closeSharedDatabase(): void {
   if (sharedDatabase) {
-    sharedDatabase.close();
+    const database = sharedDatabase;
     sharedDatabase = null;
+    database.close();
   }
 }
 
