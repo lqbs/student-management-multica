@@ -1,0 +1,92 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<section class="card card--form">
+  <h2 class="card-title">成绩信息</h2>
+
+  <% if (students.length === 0 || subjects.length === 0) { %>
+    <div class="alert alert--warning">
+      录入成绩前需要先有学生与科目：请先到
+      <a class="link-inline" href="/students/new">学生档案</a>
+      建立学生，并在
+      <a class="link-inline" href="/subjects/new">科目管理</a>
+      中建立科目。
+    </div>
+  <% } %>
+
+  <form method="post" action="<%= action %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-group">
+      <label class="form-label" for="student_filter">检索学生（可选，仅用于筛选下拉项）</label>
+      <input class="form-control" type="search" id="student_filter" data-student-filter placeholder="输入学号或姓名关键字">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="student_id">关联学生 <span class="form-required">*</span></label>
+      <select class="form-control <%= errors.student_id ? 'is-invalid' : '' %>" id="student_id" name="student_id" data-student-select required>
+        <option value="">请选择学生</option>
+        <% students.forEach(function (item) { %>
+          <option value="<%= item.id %>" <%= values.student_id === String(item.id) ? 'selected' : '' %>><%= item.student_no %> · <%= item.name %>（<%= item.class_name || '未分班' %>）</option>
+        <% }); %>
+      </select>
+      <% if (errors.student_id) { %>
+        <p class="form-error" id="student_id-error"><%= errors.student_id %></p>
+      <% } else { %>
+        <p class="form-help">下拉列表按学号排序，可用上方输入框筛选。</p>
+      <% } %>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="subject_id">考试科目 <span class="form-required">*</span></label>
+      <select class="form-control <%= errors.subject_id ? 'is-invalid' : '' %>" id="subject_id" name="subject_id" required>
+        <option value="">请选择考试科目</option>
+        <% subjects.forEach(function (item) { %>
+          <option value="<%= item.id %>" <%= values.subject_id === String(item.id) ? 'selected' : '' %>><%= item.name %></option>
+        <% }); %>
+      </select>
+      <% if (errors.subject_id) { %>
+        <p class="form-error" id="subject_id-error"><%= errors.subject_id %></p>
+      <% } else { %>
+        <p class="form-help">每位学生每科只保留一条当前成绩。</p>
+      <% } %>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="score">分数 <span class="form-required">*</span></label>
+      <input
+        class="form-control <%= errors.score ? 'is-invalid' : '' %>"
+        type="text"
+        inputmode="decimal"
+        id="score"
+        name="score"
+        value="<%= values.score %>"
+        maxlength="5"
+        required
+        autocomplete="off"
+        placeholder="0 ~ 100，最多一位小数，如 89.5"
+      >
+      <% if (errors.score) { %>
+        <p class="form-error" id="score-error"><%= errors.score %></p>
+      <% } else { %>
+        <p class="form-help">接受 0、100、99.5 等写法；拒绝负数、超过 100 或两位以上小数。</p>
+      <% } %>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">保存提交</button>
+      <a class="btn btn--secondary" href="/scores">取消并返回列表</a>
+    </div>
+  </form>
+</section>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,91 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--primary" href="/classes/new">+ 新建班级</a>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<div class="alert alert--info">
+  删除保护机制生效中：班级内仍有在读学生时无法删除，需先转班或取消分班。
+</div>
+
+<form class="filter-bar" method="get" action="/classes">
+  <div class="filter-field">
+    <label class="form-label" for="q">班级名称</label>
+    <input class="form-control" type="search" id="q" name="q" value="<%= search %>" maxlength="100" placeholder="如 高一">
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn--primary" type="submit">查询筛选</button>
+    <a class="btn btn--secondary" href="/classes">重置条件</a>
+  </div>
+</form>
+
+<section class="card">
+  <% if (pagination.total === 0) { %>
+    <div class="empty-state">
+      <% if (search) { %>
+        <p class="empty-title">未找到符合条件的记录</p>
+        <p class="empty-hint">请尝试缩短关键字或重置筛选条件。</p>
+        <a class="btn btn--secondary" href="/classes">清空筛选条件</a>
+      <% } else { %>
+        <p class="empty-title">暂无班级数据</p>
+        <p class="empty-hint">请点击右上角“新建班级”建立第一个班级。</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>班级名称</th>
+            <th>在读学生人数</th>
+            <th>创建时间</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% classes.forEach(function (item) { %>
+            <tr>
+              <td class="font-bold"><%= item.name %></td>
+              <td>
+                <a class="link-inline" href="/students?classId=<%= item.id %>"><%= item.student_count %> 人</a>
+              </td>
+              <td class="text-muted"><%= formatDateTime(item.created_at) %></td>
+              <td class="text-right row-actions">
+                <a class="btn btn--sm btn--secondary" href="/students?classId=<%= item.id %>">查看学生</a>
+                <a class="btn btn--sm btn--secondary" href="/classes/<%= item.id %>/edit">编辑</a>
+                <% if (item.student_count === 0) { %>
+                  <a
+                    class="btn btn--sm btn--danger-outline"
+                    href="/classes/<%= item.id %>/delete-confirm"
+                    data-delete-url="/classes/<%= item.id %>/delete"
+                    data-delete-title="确认删除班级"
+                    data-delete-warning="确认删除班级【<%= item.name %>】吗？此操作不可逆，取消不会写入任何修改。"
+                  >删除</a>
+                <% } else { %>
+                  <a
+                    class="btn btn--sm btn--disabled"
+                    href="/classes/<%= item.id %>/delete-confirm"
+                    title="该班级有 <%= item.student_count %> 名学生，请先转班或取消分班"
+                    aria-disabled="true"
+                  >删除（已锁定）</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/pagination') %>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

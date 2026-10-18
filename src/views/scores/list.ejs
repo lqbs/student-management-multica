@@ -1,0 +1,107 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--secondary" href="/subjects">科目设置</a>
+    <a class="btn btn--primary" href="/scores/new">+ 录入新成绩</a>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<form class="filter-bar filter-bar--stacked" method="get" action="/scores">
+  <div class="filter-field">
+    <label class="form-label" for="q">学生检索</label>
+    <input class="form-control" type="search" id="q" name="q" value="<%= search %>" maxlength="100" placeholder="姓名 / 学号关键字">
+  </div>
+  <div class="filter-field">
+    <label class="form-label" for="classId">所在班级</label>
+    <select class="form-control" id="classId" name="classId">
+      <option value="" <%= classFilter === null ? 'selected' : '' %>>全部班级（含未分班）</option>
+      <option value="unassigned" <%= classFilter === 'unassigned' ? 'selected' : '' %>>未分班</option>
+      <% classes.forEach(function (item) { %>
+        <option value="<%= item.id %>" <%= classFilter === item.id ? 'selected' : '' %>><%= item.name %>（<%= item.student_count %> 人）</option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="filter-field">
+    <label class="form-label" for="subjectId">考试科目</label>
+    <select class="form-control" id="subjectId" name="subjectId">
+      <option value="" <%= subjectFilter === null ? 'selected' : '' %>>全部科目</option>
+      <% subjects.forEach(function (item) { %>
+        <option value="<%= item.id %>" <%= subjectFilter === item.id ? 'selected' : '' %>><%= item.name %></option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn--primary" type="submit">立即筛选</button>
+    <a class="btn btn--secondary" href="/scores">重置条件</a>
+  </div>
+</form>
+
+<section class="card">
+  <% if (pagination.total === 0) { %>
+    <div class="empty-state">
+      <% if (search || classFilter !== null || subjectFilter !== null) { %>
+        <p class="empty-title">未找到符合条件的记录</p>
+        <p class="empty-hint">请尝试缩短关键字或重置筛选条件。</p>
+        <a class="btn btn--secondary" href="/scores">清空筛选条件</a>
+      <% } else { %>
+        <p class="empty-title">暂无成绩数据</p>
+        <p class="empty-hint">请点击右上角“录入新成绩”开始录入。</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>学号</th>
+            <th>姓名</th>
+            <th>所在班级</th>
+            <th>考试科目</th>
+            <th>分数</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% scores.forEach(function (score) { %>
+            <tr>
+              <td class="font-mono"><%= score.student_no %></td>
+              <td class="font-bold"><a class="link-inline" href="/students/<%= score.student_id %>"><%= score.student_name %></a></td>
+              <td>
+                <% if (score.class_name) { %>
+                  <span class="badge badge--primary"><%= score.class_name %></span>
+                <% } else { %>
+                  <span class="badge badge--neutral">未分班</span>
+                <% } %>
+              </td>
+              <td><%= score.subject_name %></td>
+              <td>
+                <span class="badge badge--<%= scoreLevel(score.score_tenths) === 'plain' ? 'neutral' : scoreLevel(score.score_tenths) %>"><%= formatScore(score.score_tenths) %></span>
+              </td>
+              <td class="text-right row-actions">
+                <a class="btn btn--sm btn--secondary" href="/scores/<%= score.id %>/edit">编辑</a>
+                <a
+                  class="btn btn--sm btn--danger-outline"
+                  href="/scores/<%= score.id %>/delete-confirm"
+                  data-delete-url="/scores/<%= score.id %>/delete"
+                  data-delete-title="确认删除成绩"
+                  data-delete-warning="此操作将删除 <%= score.student_name %>（学号 <%= score.student_no %>）的 <%= score.subject_name %> 成绩（<%= formatScore(score.score_tenths) %> 分），取消不会写入任何修改。"
+                >删除</a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/pagination') %>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

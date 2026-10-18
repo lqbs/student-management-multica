@@ -1,0 +1,24 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/students">学生管理系统</a>
+    <nav class="main-nav" aria-label="主导航">
+      <a href="/students" class="<%= page.nav === 'students' ? 'is-active' : '' %>">学生档案</a>
+      <a href="/classes" class="<%= page.nav === 'classes' ? 'is-active' : '' %>">班级管理</a>
+      <a href="/scores" class="<%= page.nav === 'scores' ? 'is-active' : '' %>">成绩管理</a>
+      <a href="/subjects" class="<%= page.nav === 'subjects' ? 'is-active' : '' %>">科目管理</a>
+    </nav>
+  </div>
+</header>
+<main class="container main-content">
+  <% if (typeof page.breadcrumbs !== 'undefined' && page.breadcrumbs && page.breadcrumbs.length > 0) { %>
+    <nav class="breadcrumbs" aria-label="面包屑导航">
+      <% page.breadcrumbs.forEach(function (crumb, index) { %>
+        <% if (index > 0) { %><span class="breadcrumbs-sep" aria-hidden="true">/</span><% } %>
+        <% if (crumb.href && index < page.breadcrumbs.length - 1) { %>
+          <a href="<%= crumb.href %>"><%= crumb.label %></a>
+        <% } else { %>
+          <span class="breadcrumbs-current"><%= crumb.label %></span>
+        <% } %>
+      <% }); %>
+    </nav>
+  <% } %>

@@ -1,0 +1,65 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <p class="page-description">确认删除前的完整影响范围。</p>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<section class="card">
+  <h2 class="card-title">即将删除的学生</h2>
+  <dl class="detail-grid">
+    <div class="detail-item">
+      <dt>学号</dt>
+      <dd class="font-mono detail-strong"><%= target.student_no %></dd>
+    </div>
+    <div class="detail-item">
+      <dt>姓名</dt>
+      <dd class="detail-strong"><%= target.name %></dd>
+    </div>
+    <div class="detail-item">
+      <dt>所属班级</dt>
+      <dd><%= target.class_name || '未分班' %></dd>
+    </div>
+    <div class="detail-item">
+      <dt>将同步删除的成绩</dt>
+      <dd class="detail-strong"><%= scoreCount %> 条</dd>
+    </div>
+  </dl>
+
+  <% if (scores.length > 0) { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr><th>科目</th><th>分数</th></tr>
+        </thead>
+        <tbody>
+          <% scores.forEach(function (score) { %>
+            <tr>
+              <td><%= score.subject_name %></td>
+              <td class="font-mono"><%= formatScore(score.score_tenths) %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+
+  <div class="alert alert--danger">
+    此操作不可撤销：删除后该学生档案与以上成绩记录将一并消失，取消则不会写入任何修改。
+  </div>
+
+  <div class="form-actions">
+    <form method="post" action="/students/<%= target.id %>/delete">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn--danger" type="submit">确认删除该学生</button>
+    </form>
+    <a class="btn btn--secondary" href="/students/<%= target.id %>">取消并返回</a>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

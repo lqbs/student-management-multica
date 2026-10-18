@@ -1,0 +1,94 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--primary" href="/students/new">+ 添加新学生</a>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<form class="filter-bar" method="get" action="/students">
+  <div class="filter-field">
+    <label class="form-label" for="q">姓名 / 学号</label>
+    <input class="form-control" type="search" id="q" name="q" value="<%= search %>" maxlength="100" placeholder="如 001 或 张">
+  </div>
+  <div class="filter-field">
+    <label class="form-label" for="classId">班级</label>
+    <select class="form-control" id="classId" name="classId">
+      <option value="" <%= classFilter === null ? 'selected' : '' %>>全部班级（含未分班）</option>
+      <option value="unassigned" <%= classFilter === 'unassigned' ? 'selected' : '' %>>未分班</option>
+      <% classes.forEach(function (item) { %>
+        <option value="<%= item.id %>" <%= classFilter === item.id ? 'selected' : '' %>><%= item.name %>（<%= item.student_count %> 人）</option>
+      <% }); %>
+    </select>
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn--primary" type="submit">查询筛选</button>
+    <a class="btn btn--secondary" href="/students">重置条件</a>
+  </div>
+</form>
+
+<section class="card">
+  <% if (pagination.total === 0) { %>
+    <div class="empty-state">
+      <% if (search || classFilter !== null) { %>
+        <p class="empty-title">未找到符合条件的记录</p>
+        <p class="empty-hint">请尝试缩短关键字或重置筛选条件。</p>
+        <a class="btn btn--secondary" href="/students">清空筛选条件</a>
+      <% } else { %>
+        <p class="empty-title">暂无学生数据</p>
+        <p class="empty-hint">请点击右上角“添加新学生”建立第一条档案。</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>学号</th>
+            <th>姓名</th>
+            <th>所在班级</th>
+            <th>录入时间</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% students.forEach(function (student) { %>
+            <tr>
+              <td class="font-mono"><%= student.student_no %></td>
+              <td class="font-bold"><%= student.name %></td>
+              <td>
+                <% if (student.class_name) { %>
+                  <span class="badge badge--primary"><%= student.class_name %></span>
+                <% } else { %>
+                  <span class="badge badge--neutral">未分班</span>
+                <% } %>
+              </td>
+              <td class="text-muted"><%= formatDateTime(student.created_at) %></td>
+              <td class="text-right row-actions">
+                <a class="btn btn--sm btn--secondary" href="/students/<%= student.id %>">详情</a>
+                <a class="btn btn--sm btn--secondary" href="/students/<%= student.id %>/edit">编辑</a>
+                <a
+                  class="btn btn--sm btn--danger-outline"
+                  href="/students/<%= student.id %>/delete-confirm"
+                  data-delete-url="/students/<%= student.id %>/delete"
+                  data-delete-title="确认删除学生"
+                  data-delete-warning="此操作将永久删除学生 <%= student.name %>（学号 <%= student.student_no %>），并同步删除该学生名下的全部 <%= student.score_count %> 条成绩记录。取消操作不会写入任何修改。"
+                >删除</a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/pagination') %>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

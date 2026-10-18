@@ -1,0 +1,21 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <p class="page-description">操作未完成，数据未被修改。</p>
+  </div>
+</section>
+
+<section class="card">
+  <div class="alert alert--<%= status >= 500 ? 'danger' : 'warning' %>">
+    <strong><%= status %></strong> · <%= message %>
+  </div>
+  <div class="form-actions">
+    <a class="btn btn--primary" href="/students">返回学生档案</a>
+    <a class="btn btn--secondary" href="javascript:history.back()">返回上一页</a>
+  </div>
+</section>
+
+<%- include('../partials/footer') %>

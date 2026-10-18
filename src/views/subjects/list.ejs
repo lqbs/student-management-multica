@@ -1,0 +1,89 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--primary" href="/subjects/new">+ 新增科目</a>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<div class="alert alert--info">
+  科目为成绩录入的前置数据；已有关联成绩的科目禁止删除，可改为编辑名称。
+</div>
+
+<form class="filter-bar" method="get" action="/subjects">
+  <div class="filter-field">
+    <label class="form-label" for="q">科目名称</label>
+    <input class="form-control" type="search" id="q" name="q" value="<%= search %>" maxlength="100" placeholder="如 数学">
+  </div>
+  <div class="filter-actions">
+    <button class="btn btn--primary" type="submit">查询筛选</button>
+    <a class="btn btn--secondary" href="/subjects">重置条件</a>
+  </div>
+</form>
+
+<section class="card">
+  <% if (pagination.total === 0) { %>
+    <div class="empty-state">
+      <% if (search) { %>
+        <p class="empty-title">未找到符合条件的记录</p>
+        <p class="empty-hint">请尝试缩短关键字或重置筛选条件。</p>
+        <a class="btn btn--secondary" href="/subjects">清空筛选条件</a>
+      <% } else { %>
+        <p class="empty-title">暂无科目数据</p>
+        <p class="empty-hint">请点击右上角“新增科目”建立第一个科目。</p>
+      <% } %>
+    </div>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>科目名称</th>
+            <th>关联成绩数</th>
+            <th>创建时间</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% subjects.forEach(function (item) { %>
+            <tr>
+              <td class="font-bold"><%= item.name %></td>
+              <td><%= item.score_count %> 条</td>
+              <td class="text-muted"><%= formatDateTime(item.created_at) %></td>
+              <td class="text-right row-actions">
+                <a class="btn btn--sm btn--secondary" href="/scores?subjectId=<%= item.id %>">查看成绩</a>
+                <a class="btn btn--sm btn--secondary" href="/subjects/<%= item.id %>/edit">编辑</a>
+                <% if (item.score_count === 0) { %>
+                  <a
+                    class="btn btn--sm btn--danger-outline"
+                    href="/subjects/<%= item.id %>/delete-confirm"
+                    data-delete-url="/subjects/<%= item.id %>/delete"
+                    data-delete-title="确认删除科目"
+                    data-delete-warning="确认删除科目【<%= item.name %>】吗？此操作不可逆，取消不会写入任何修改。"
+                  >删除</a>
+                <% } else { %>
+                  <a
+                    class="btn btn--sm btn--disabled"
+                    href="/subjects/<%= item.id %>/delete-confirm"
+                    title="该科目已包含 <%= item.score_count %> 条成绩记录，禁止删除"
+                    aria-disabled="true"
+                  >删除（已锁定）</a>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <%- include('../partials/pagination') %>
+  <% } %>
+</section>
+
+<%- include('../partials/footer') %>

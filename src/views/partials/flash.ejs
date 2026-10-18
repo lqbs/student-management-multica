@@ -1,0 +1,9 @@
+<% if (typeof flash !== 'undefined' && flash) { %>
+  <div class="banner banner--<%= flash.type %>" role="<%= flash.type === 'danger' ? 'alert' : 'status' %>">
+    <span class="banner-icon" aria-hidden="true"><%= flash.type === 'success' ? '✔' : flash.type === 'danger' ? '✖' : 'ℹ' %></span>
+    <span class="banner-text"><%= flash.message %></span>
+    <% if (typeof conflictEditUrl !== 'undefined' && conflictEditUrl) { %>
+      <a class="banner-link" href="<%= conflictEditUrl %>">前往编辑该成绩记录</a>
+    <% } %>
+  </div>
+<% } %>
