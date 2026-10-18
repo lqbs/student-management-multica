@@ -1,0 +1,104 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--secondary" href="/students/<%= student.id %>/edit">编辑资料</a>
+    <a class="btn btn--primary" href="/scores/new?studentId=<%= student.id %>">+ 录入此学生成绩</a>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<section class="card">
+  <h2 class="card-title">基础信息</h2>
+  <dl class="detail-grid">
+    <div class="detail-item">
+      <dt>学号</dt>
+      <dd class="font-mono detail-strong"><%= student.student_no %></dd>
+    </div>
+    <div class="detail-item">
+      <dt>姓名</dt>
+      <dd class="detail-strong"><%= student.name %></dd>
+    </div>
+    <div class="detail-item">
+      <dt>所属班级</dt>
+      <dd>
+        <% if (student.class_name) { %>
+          <span class="badge badge--primary"><%= student.class_name %></span>
+        <% } else { %>
+          <span class="badge badge--neutral">未分班</span>
+        <% } %>
+        <a class="link-inline" href="/students/<%= student.id %>/edit">转班 / 分班</a>
+      </dd>
+    </div>
+    <div class="detail-item">
+      <dt>创建时间</dt>
+      <dd class="text-muted"><%= formatDateTime(student.created_at) %></dd>
+    </div>
+  </dl>
+</section>
+
+<section class="card">
+  <h2 class="card-title">已修科目与成绩</h2>
+  <% if (scores.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">该学生暂未录入任何成绩</p>
+      <p class="empty-hint">点击右上角“录入此学生成绩”开始录入。</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>考试科目</th>
+            <th>分数</th>
+            <th>录入时间</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% scores.forEach(function (score) { %>
+            <tr>
+              <td class="font-bold"><%= score.subject_name %></td>
+              <td>
+                <span class="badge badge--<%= scoreLevel(score.score_tenths) === 'plain' ? 'neutral' : scoreLevel(score.score_tenths) %>"><%= formatScore(score.score_tenths) %></span>
+              </td>
+              <td class="text-muted"><%= formatDateTime(score.created_at) %></td>
+              <td class="text-right row-actions">
+                <a class="btn btn--sm btn--secondary" href="/scores/<%= score.id %>/edit">编辑</a>
+                <a
+                  class="btn btn--sm btn--danger-outline"
+                  href="/scores/<%= score.id %>/delete-confirm"
+                  data-delete-url="/scores/<%= score.id %>/delete"
+                  data-delete-title="确认删除成绩"
+                  data-delete-warning="此操作将删除 <%= student.name %> 的 <%= score.subject_name %> 成绩（<%= formatScore(score.score_tenths) %> 分），取消不会写入任何修改。"
+                >删除</a>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="card card--danger">
+  <h2 class="card-title">危险操作区</h2>
+  <p class="card-description">
+    删除学生将永久删除该学生档案，并同步删除其名下的全部 <%= student.score_count %> 条成绩记录；取消操作不会写入任何修改。
+  </p>
+  <a
+    class="btn btn--danger"
+    href="/students/<%= student.id %>/delete-confirm"
+    data-delete-url="/students/<%= student.id %>/delete"
+    data-delete-title="确认删除学生"
+    data-delete-warning="此操作将永久删除学生 <%= student.name %>（学号 <%= student.student_no %>），并同步删除该学生名下的全部 <%= student.score_count %> 条成绩记录。取消操作不会写入任何修改。"
+  >删除该学生</a>
+</section>
+
+<%- include('../partials/footer') %>

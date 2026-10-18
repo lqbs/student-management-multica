@@ -1,0 +1,30 @@
+{
+  "name": "student-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "中文网页版学生管理系统（学习演示）：学生档案、班级、科目与成绩管理，本地 SQLite 持久化。",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/src/server.js",
+    "dev": "node scripts/dev.mjs",
+    "db:migrate": "npm run build && node dist/src/db/migrate.js",
+    "db:seed": "npm run build && node dist/src/db/seed.js",
+    "test": "npm run build && node --test \"dist/tests/**/*.test.js\"",
+    "acceptance": "npm run build && node scripts/acceptance-walkthrough.mjs"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

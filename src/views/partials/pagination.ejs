@@ -1,0 +1,36 @@
+<% if (typeof pagination !== 'undefined' && pagination && pagination.total > 0) { %>
+  <%
+    const totalPages = pagination.totalPages;
+    let windowStart = Math.max(1, pagination.page - 2);
+    const windowEnd = Math.min(totalPages, windowStart + 4);
+    windowStart = Math.max(1, windowEnd - 4);
+  %>
+  <nav class="pagination" aria-label="分页导航">
+    <span class="pagination-info">共 <%= pagination.total %> 条记录 · 第 <%= pagination.page %> / <%= totalPages %> 页（每页 <%= pagination.pageSize %> 条）</span>
+    <ul class="pagination-list">
+      <li>
+        <% if (pagination.hasPrev) { %>
+          <a class="pagination-link" href="<%= urlFor(pagination.page - 1) %>" rel="prev">上一页</a>
+        <% } else { %>
+          <span class="pagination-link is-disabled">上一页</span>
+        <% } %>
+      </li>
+      <% for (let p = windowStart; p <= windowEnd; p += 1) { %>
+        <li>
+          <% if (p === pagination.page) { %>
+            <span class="pagination-link is-active" aria-current="page"><%= p %></span>
+          <% } else { %>
+            <a class="pagination-link" href="<%= urlFor(p) %>"><%= p %></a>
+          <% } %>
+        </li>
+      <% } %>
+      <li>
+        <% if (pagination.hasNext) { %>
+          <a class="pagination-link" href="<%= urlFor(pagination.page + 1) %>" rel="next">下一页</a>
+        <% } else { %>
+          <span class="pagination-link is-disabled">下一页</span>
+        <% } %>
+      </li>
+    </ul>
+  </nav>
+<% } %>

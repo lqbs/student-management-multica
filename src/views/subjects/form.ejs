@@ -1,0 +1,42 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<section class="card card--form">
+  <h2 class="card-title">科目信息</h2>
+  <form method="post" action="<%= action %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-group">
+      <label class="form-label" for="name">科目名称 <span class="form-required">*</span></label>
+      <input
+        class="form-control <%= errors.name ? 'is-invalid' : '' %>"
+        type="text"
+        id="name"
+        name="name"
+        value="<%= values.name %>"
+        maxlength="50"
+        required
+        placeholder="请输入科目名称，如：高等数学、大学英语"
+      >
+      <% if (errors.name) { %>
+        <p class="form-error" id="name-error"><%= errors.name %></p>
+      <% } else { %>
+        <p class="form-help">1-50 个字符，全局唯一。</p>
+      <% } %>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">保存提交</button>
+      <a class="btn btn--secondary" href="/subjects">取消并返回列表</a>
+    </div>
+  </form>
+</section>
+
+<%- include('../partials/footer') %>

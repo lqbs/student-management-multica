@@ -1,0 +1,79 @@
+<%- include('../partials/head') %>
+<%- include('../partials/header') %>
+
+<section class="page-head">
+  <div>
+    <h1 class="page-title"><%= page.heading %></h1>
+    <% if (page.description) { %><p class="page-description"><%= page.description %></p><% } %>
+  </div>
+</section>
+
+<%- include('../partials/flash') %>
+
+<section class="card card--form">
+  <h2 class="card-title">学生基础信息</h2>
+  <form method="post" action="<%= action %>" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="form-group">
+      <label class="form-label" for="student_no">学号 <span class="form-required">*</span></label>
+      <input
+        class="form-control <%= errors.student_no ? 'is-invalid' : '' %>"
+        type="text"
+        id="student_no"
+        name="student_no"
+        value="<%= values.student_no %>"
+        maxlength="32"
+        required
+        autocomplete="off"
+        placeholder="如 001"
+      >
+      <% if (errors.student_no) { %>
+        <p class="form-error" id="student_no-error"><%= errors.student_no %></p>
+      <% } else { %>
+        <p class="form-help">1-32 位字母、数字或连字符；系统自动转大写并保留前导零，保存后全局唯一。</p>
+      <% } %>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="name">学生姓名 <span class="form-required">*</span></label>
+      <input
+        class="form-control <%= errors.name ? 'is-invalid' : '' %>"
+        type="text"
+        id="name"
+        name="name"
+        value="<%= values.name %>"
+        maxlength="50"
+        required
+        placeholder="请输入学生姓名"
+      >
+      <% if (errors.name) { %>
+        <p class="form-error" id="name-error"><%= errors.name %></p>
+      <% } else { %>
+        <p class="form-help">1-50 个字符，不可为空白。</p>
+      <% } %>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="class_id">分配班级</label>
+      <select class="form-control <%= errors.class_id ? 'is-invalid' : '' %>" id="class_id" name="class_id">
+        <option value="">-- 暂未分班 --</option>
+        <% classes.forEach(function (item) { %>
+          <option value="<%= item.id %>" <%= values.class_id === String(item.id) ? 'selected' : '' %>><%= item.name %>（<%= item.student_count %> 人）</option>
+        <% }); %>
+      </select>
+      <% if (errors.class_id) { %>
+        <p class="form-error" id="class_id-error"><%= errors.class_id %></p>
+      <% } else { %>
+        <p class="form-help">可暂不选择，后续随时可以转班或分班。</p>
+      <% } %>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">保存提交</button>
+      <a class="btn btn--secondary" href="/students">取消并返回列表</a>
+    </div>
+  </form>
+</section>
+
+<%- include('../partials/footer') %>
