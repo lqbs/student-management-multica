@@ -50,11 +50,11 @@ npm start
 | `npm run build` | 将 `src/`、`tests/` 编译到 `dist/` |
 | `npm start` | 以编译产物启动服务（启动时自动执行迁移） |
 | `npm test` | 编译后运行全部集成 / 单元测试（真实临时 SQLite + 真实 HTTP 端口） |
-| `npm run acceptance` | 编译后启动真实服务子进程，按《演示步骤》走一遍验收走查并打印每项结果（需已有种子数据，默认使用当前 `DATABASE_PATH`） |
+| `npm run acceptance` | 编译后启动真实服务子进程，按《演示步骤》走一遍验收走查并打印每项结果（前置：已执行 `db:seed`，全新初始化或 `--force` 重置后的库均可——脚本按名称解析班级 / 科目 ID，不依赖自增主键；默认使用当前 `DATABASE_PATH`） |
 | `npm run typecheck` | 仅类型检查，不产出文件 |
 | `npm run db:migrate` | 应用版本化迁移（幂等） |
 | `npm run db:seed` | 空库时写入合成示例数据；重复运行跳过 |
-| `npm run db:seed -- --force` | **显式重置**：清空四张表后重新写入示例数据（会删除手工录入的数据） |
+| `npm run db:seed -- --force` | **显式重置**：清空四张表后重新写入示例数据，并重置自增序列（重置后的 ID 与全新初始化一致；会删除手工录入的数据） |
 
 ## 数据保存位置与配置
 

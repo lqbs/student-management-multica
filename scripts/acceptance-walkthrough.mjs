@@ -1,5 +1,6 @@
 /**
  * 端到端验收走查（不进入 npm test）：以真实子进程启动服务，按 README《演示步骤》走一遍主要流程。
+ * 前置：数据库已执行 db:seed（全新初始化或 `--force` 重置后的库均可）。
  * 用法：node scripts/acceptance-walkthrough.mjs
  */
 import { spawn } from 'node:child_process';
@@ -81,6 +82,23 @@ async function ensureCsrf() {
   return csrf;
 }
 
+/**
+ * 从列表页按名称解析记录 ID，避免硬编码自增主键：
+ * `db:seed -- --force` 重置过的库中班级 / 科目 ID 与全新初始化不同。
+ */
+function findIdByName(html, name, section) {
+  for (const row of html.split('<tr>')) {
+    if (!row.includes(name)) {
+      continue;
+    }
+    const match = new RegExp(`/${section}/(\\d+)/edit`).exec(row);
+    if (match) {
+      return Number(match[1]);
+    }
+  }
+  return null;
+}
+
 async function postForm(pathname, fields) {
   const body = new URLSearchParams();
   for (const [key, value] of Object.entries(fields)) {
@@ -102,6 +120,14 @@ try {
   const unassigned = await request('/students?classId=unassigned');
   record('未分班筛选生效', unassigned.status === 200 && unassigned.text.includes('演示学生06'), `HTTP ${unassigned.status}`);
 
+  // 动态解析种子数据中的班级 / 科目 ID（与自增序列无关）
+  const classId = findIdByName((await request('/classes')).text, '高一(1)班', 'classes');
+  const subjectId = findIdByName((await request('/subjects')).text, '数学', 'subjects');
+  record('按名称解析种子班级与科目 ID', classId !== null && subjectId !== null, `classId=${classId} subjectId=${subjectId}`);
+  if (classId === null || subjectId === null) {
+    throw new Error('未能解析种子数据的班级 / 科目 ID，无法继续走查');
+  }
+
   const created = await postForm('/students', { student_no: '007', name: '走查学生', class_id: '' });
   record('新增学生成功并重定向', created.status === 303 && created.location.includes('flash=student-created'), created.location);
 
@@ -112,28 +138,36 @@ try {
   const studentId = studentRow ? Number(studentRow[1]) : null;
   record('可通过搜索定位新建学生', studentId !== null, `studentId=${studentId}`);
 
-  const badScore = await postForm('/scores', { student_id: String(studentId), subject_id: '1', score: '99.55' });
+  const badScore = await postForm('/scores', { student_id: String(studentId), subject_id: String(subjectId), score: '99.55' });
   record('成绩两位小数被 422 拒绝', badScore.status === 422 && badScore.text.includes('最多一位小数'));
 
-  const okScore = await postForm('/scores', { student_id: String(studentId), subject_id: '1', score: '99.5' });
+  const okScore = await postForm('/scores', { student_id: String(studentId), subject_id: String(subjectId), score: '99.5' });
   record('成绩 99.5 录入成功', okScore.status === 303, okScore.location);
 
-  const duplicatedScore = await postForm('/scores', { student_id: String(studentId), subject_id: '1', score: '88' });
+  const duplicatedScore = await postForm('/scores', {
+    student_id: String(studentId),
+    subject_id: String(subjectId),
+    score: '88',
+  });
   record(
     '重复成绩返回 409 并给出编辑链接',
     duplicatedScore.status === 409 && duplicatedScore.text.includes('成绩记录已存在') && /\/scores\/\d+\/edit/.test(duplicatedScore.text),
   );
 
-  const blockedClass = await postForm('/classes/1/delete', {});
+  const blockedClass = await postForm(`/classes/${classId}/delete`, {});
   record('有学生的班级删除被 409 拦截', blockedClass.status === 409 && blockedClass.text.includes('无法删除该班级'));
 
-  const blockedSubject = await postForm('/subjects/1/delete', {});
+  const blockedSubject = await postForm(`/subjects/${subjectId}/delete`, {});
   record('有成绩的科目删除被 409 拦截', blockedSubject.status === 409 && blockedSubject.text.includes('无法删除科目'));
 
   const confirmPage = await request(`/students/${studentId}/delete-confirm`);
   record('学生删除确认页提示级联删除成绩', confirmPage.status === 200 && confirmPage.text.includes('将同步删除的成绩'));
 
-  const renamed = await postForm(`/students/${studentId}`, { student_no: '007', name: '走查学生（改）', class_id: '1' });
+  const renamed = await postForm(`/students/${studentId}`, {
+    student_no: '007',
+    name: '走查学生（改）',
+    class_id: String(classId),
+  });
   record('转班 / 改名成功', renamed.status === 303 && renamed.location.includes('flash=student-updated'));
 } finally {
   await stopServer(server);

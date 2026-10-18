@@ -65,6 +65,7 @@ export function seedDatabase(db: Database, options: { force?: boolean } = {}): S
   withTransaction(db, () => {
     if (options.force) {
       db.exec('DELETE FROM scores; DELETE FROM students; DELETE FROM subjects; DELETE FROM classes;');
+      resetAutoIncrement(db);
     }
 
     const timestamp = nowIso();
@@ -116,6 +117,21 @@ function isMainModule(moduleUrl: string): boolean {
     return false;
   }
   return pathToFileURL(entry).href === moduleUrl;
+}
+
+/**
+ * 重置 AUTOINCREMENT 自增序列：仅 DELETE 数据不会回退 sqlite_sequence，
+ * 会让 `--force` 重置后的 ID 从旧值继续增长（与全新初始化不一致）。
+ * sqlite_sequence 仅在存在 AUTOINCREMENT 表并写入过数据后才存在，因此需容错。
+ */
+function resetAutoIncrement(db: Database): void {
+  const sequenceTable = db
+    .prepare("SELECT 1 AS ok FROM sqlite_master WHERE type = 'table' AND name = 'sqlite_sequence'")
+    .get() as { ok: number } | undefined;
+  if (!sequenceTable) {
+    return;
+  }
+  db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('scores', 'students', 'subjects', 'classes')").run();
 }
 
 if (isMainModule(import.meta.url)) {

@@ -104,6 +104,37 @@ describe('持久化与初始化', () => {
     }
   });
 
+  it('--force 重置会回退自增序列，使 ID 与全新初始化一致（O1 回归）', () => {
+    const db = createDatabase(createTempDatabaseFile());
+    try {
+      seedDatabase(db);
+      const idsOf = (table: 'classes' | 'subjects' | 'students'): number[] =>
+        (db.prepare(`SELECT id FROM ${table} ORDER BY id`).all() as { id: number }[]).map((row) => Number(row.id));
+      assert.deepEqual(idsOf('classes'), [1, 2]);
+      assert.deepEqual(idsOf('subjects'), [1, 2, 3]);
+      assert.deepEqual(idsOf('students'), [1, 2, 3, 4, 5, 6]);
+
+      // 连续重置（模拟用户反复执行 db:seed -- --force）后 ID 仍从 1 开始
+      seedDatabase(db, { force: true });
+      seedDatabase(db, { force: true });
+      assert.deepEqual(idsOf('classes'), [1, 2]);
+      assert.deepEqual(idsOf('subjects'), [1, 2, 3]);
+      assert.deepEqual(idsOf('students'), [1, 2, 3, 4, 5, 6]);
+
+      const now = new Date().toISOString();
+      const newClassId = Number(
+        db.prepare('INSERT INTO classes (name, created_at, updated_at) VALUES (?, ?, ?)').run('新班级', now, now)
+          .lastInsertRowid,
+      );
+      assert.equal(newClassId, 3, '重置后新增记录应从 1..N 之后继续编号');
+
+      const counts = countRows(db);
+      assert.deepEqual(counts, { classes: 3, students: 6, subjects: 3, scores: 14 });
+    } finally {
+      db.close();
+    }
+  });
+
   it('种子数据包含未分班学生与边界成绩（0 / 100 / 小数）', async () => {
     const server = await startTestServer({ seed: true });
     try {
